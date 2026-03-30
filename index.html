@@ -2,117 +2,153 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>منشئ شجرة العائلة الذكي</title>
+    <title>شجرة العائلة الذكية</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 20px; }
-        .controls { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
-        button { background-color: #2c3e50; color: white; cursor: pointer; }
-        #tree-container { background: white; border-radius: 10px; overflow: auto; min-height: 500px; }
-        .node circle { fill: #fff; stroke: #2ecc71; stroke-width: 3px; }
-        .node text { font: 14px sans-serif; }
+        :root { --primary: #2c3e50; --green: #27ae60; --light: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* القائمة الجانبية */
+        .sidebar { width: 320px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 10; display: flex; flex-direction: column; }
+        h2 { color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid var(--light); padding-bottom: 10px; }
+        
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
+        label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #666; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        
+        button { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-main { background: var(--primary); color: white; }
+        .btn-add { background: var(--green); color: white; }
+        button:hover { opacity: 0.8; }
+
+        /* منطقة الرسم */
+        #tree-area { flex-grow: 1; position: relative; background: white; cursor: grab; }
+        .node circle { fill: #fff; stroke: var(--green); stroke-width: 3px; }
+        .node text { font-size: 14px; font-weight: bold; fill: #333; }
         .link { fill: none; stroke: #ccc; stroke-width: 2px; }
+        
+        .instructions { font-size: 0.8rem; color: #888; text-align: center; margin-top: auto; }
     </style>
 </head>
 <body>
 
-<div class="controls">
-    <h2>🌳 نظام إدارة شجرة العائلة</h2>
-    <input type="text" id="personName" placeholder="اسم الشخص الجديد">
-    <input type="text" id="parentName" placeholder="اسم الأب (اتركه فارغاً للجد الأكبر)">
-    <button onclick="addMember()">إضافة إلى الشجرة</button>
-    <p><small>* إذا تكرر اسم الأب، سيظهر تنبيه لتحديد الأب الصحيح.</small></p>
+<div class="sidebar">
+    <h2>🌳 بناء شجرة العائلة</h2>
+    
+    <div class="section" id="root-section">
+        <label>إضافة رأس العائلة (الجد الأكبر):</label>
+        <input type="text" id="rootName" placeholder="اسم الجد الأكبر">
+        <button class="btn-main" onclick="addRoot()">بدء الشجرة</button>
+    </div>
+
+    <div class="section" id="member-section" style="display:none;">
+        <label>اسم الشخص الجديد:</label>
+        <input type="text" id="newName" placeholder="الاسم الكامل">
+        
+        <label>اختر الأب من القائمة:</label>
+        <select id="parentSelect"></select>
+        
+        <button class="btn-add" onclick="addChild()">إضافة إلى الشجرة</button>
+    </div>
+
+    <button style="background:#e74c3c; color:white; font-size:0.7rem;" onclick="resetTree()">مسح الكل والبدء من جديد</button>
+    
+    <div class="instructions">
+        * استخدم الماوس للسحب والتقريب (Zoom) <br>
+        * يتم الحفظ تلقائياً في متصفحك
+    </div>
 </div>
 
-<div id="tree-container"></div>
+<div id="tree-area"></div>
 
 <script>
-    // بيانات الشجرة الأولية
-    let familyData = [];
-    let nextId = 1;
-
-    function addMember() {
-        const name = document.getElementById('personName').value;
-        const pName = document.getElementById('parentName').value;
-
-        if (!name) return alert("يرجى إدخال الاسم");
-
-        let parentId = null;
-
-        if (pName) {
-            // البحث عن الآباء الذين يحملون هذا الاسم (الخوارزمية المطلوبة)
-            const potentialParents = familyData.filter(p => p.name === pName);
-
-            if (potentialParents.length === 0) {
-                alert("لم يتم العثور على الأب. يرجى إضافته كجد أولاً أو التأكد من الاسم.");
-                return;
-            } else if (potentialParents.length === 1) {
-                parentId = potentialParents[0].id;
-            } else {
-                // حالة تكرار الأسماء
-                let msg = "يوجد أكثر من شخص بهذا الاسم، من هو الأب؟\n";
-                potentialParents.forEach((p, index) => {
-                    msg += `${index + 1}- ${p.name} (ابن ${findNameById(p.parentId) || 'غير معروف'})\n`;
-                });
-                const choice = prompt(msg);
-                if (choice > 0 && choice <= potentialParents.length) {
-                    parentId = potentialParents[choice - 1].id;
-                } else {
-                    return;
-                }
-            }
-        }
-
-        familyData.push({ id: nextId++, name: name, parentId: parentId });
+    let familyData = JSON.parse(localStorage.getItem('familyTreeData')) || [];
+    
+    function save() {
+        localStorage.setItem('familyTreeData', JSON.stringify(familyData));
+        updateUI();
         renderTree();
-        document.getElementById('personName').value = '';
     }
 
-    function findNameById(id) {
-        const p = familyData.find(x => x.id === id);
-        return p ? p.name : null;
+    function addRoot() {
+        const name = document.querySelector('#rootName').value;
+        if(!name) return;
+        familyData = [{ id: Date.now().toString(), name: name, parentId: null }];
+        document.querySelector('#rootName').value = '';
+        save();
+    }
+
+    function addChild() {
+        const name = document.querySelector('#newName').value;
+        const parentId = document.querySelector('#parentSelect').value;
+        if(!name || !parentId) return;
+        
+        familyData.push({ id: Date.now().toString(), name: name, parentId: parentId });
+        document.querySelector('#newName').value = '';
+        save();
+    }
+
+    function updateUI() {
+        const rootSection = document.querySelector('#root-section');
+        const memberSection = document.querySelector('#member-section');
+        const select = document.querySelector('#parentSelect');
+
+        if(familyData.length > 0) {
+            rootSection.style.display = 'none';
+            memberSection.style.display = 'block';
+            
+            select.innerHTML = '';
+            familyData.forEach(p => {
+                let option = document.createElement('option');
+                option.value = p.id;
+                option.text = p.name;
+                select.appendChild(option);
+            });
+        } else {
+            rootSection.style.display = 'block';
+            memberSection.style.display = 'none';
+        }
     }
 
     function renderTree() {
-        d3.select("#tree-container").selectAll("*").remove();
+        d3.select("#tree-area").selectAll("*").remove();
         if (familyData.length === 0) return;
 
-        // تحويل البيانات المسطحة إلى هيكل شجري
-        const dataStratified = d3.stratify()
-            .id(d => d.id)
-            .parentId(d => d.parentId)(familyData);
+        const width = document.querySelector('#tree-area').offsetWidth;
+        const height = document.querySelector('#tree-area').offsetHeight;
 
-        const width = 900, height = 500;
-        const svg = d3.select("#tree-container").append("svg")
-            .attr("width", width).attr("height", height)
-            .append("g").attr("transform", "translate(50,50)");
+        const svg = d3.select("#tree-area").append("svg")
+            .attr("width", "100%").attr("height", "100%")
+            .call(d3.zoom().on("zoom", (event) => g.attr("transform", event.transform)))
+            .append("g");
 
-        const treeLayout = d3.tree().size([width - 100, height - 100]);
-        const root = d3.hierarchy(dataStratified);
+        const g = svg.append("g").attr("transform", "translate(50,50)");
+
+        const stratify = d3.stratify().id(d => d.id).parentId(d => d.parentId);
+        const root = d3.hierarchy(stratify(familyData));
+
+        const treeLayout = d3.tree().nodeSize([60, 200]);
         treeLayout(root);
 
-        // رسم الروابط
-        svg.selectAll(".link")
-            .data(root.links())
-            .enter().append("path")
-            .attr("class", "link")
-            .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
+        g.selectAll(".link").data(root.links()).enter().append("path").attr("class", "link")
+            .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
 
-        // رسم العقد
-        const node = svg.selectAll(".node")
-            .data(root.descendants())
-            .enter().append("g")
-            .attr("class", "node")
-            .attr("transform", d => `translate(${d.x},${d.y})`);
+        const node = g.selectAll(".node").data(root.descendants()).enter().append("g")
+            .attr("class", "node").attr("transform", d => `translate(${d.y},${d.x})`);
 
         node.append("circle").attr("r", 10);
-        node.append("text")
-            .attr("dy", ".35em")
-            .attr("y", d => d.children ? -20 : 20)
-            .style("text-anchor", "middle")
-            .text(d => d.data.data.name);
+        node.append("text").attr("dy", ".35em").attr("x", 15).style("text-anchor", "start").text(d => d.data.name);
     }
+
+    function resetTree() {
+        if(confirm("هل تريد مسح الشجرة بالكامل؟")) {
+            familyData = [];
+            save();
+        }
+    }
+
+    window.onload = () => { updateUI(); renderTree(); };
+    window.onresize = renderTree;
 </script>
 
 </body>
