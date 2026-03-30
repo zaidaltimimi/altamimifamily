@@ -2,32 +2,33 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>شجرة العائلة الذكية</title>
+    <title>شجرة العائلة المطورة</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root { --primary: #2c3e50; --green: #27ae60; --light: #f8f9fa; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* القائمة الجانبية */
-        .sidebar { width: 320px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 10; display: flex; flex-direction: column; }
-        h2 { color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid var(--light); padding-bottom: 10px; }
+        .sidebar { width: 320px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 10; display: flex; flex-direction: column; border-left: 1px solid #ddd; }
+        h2 { color: var(--primary); font-size: 1.2rem; border-bottom: 2px solid var(--light); padding-bottom: 10px; margin-top: 0; }
         
-        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; }
-        label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #666; }
-        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px; background: #fff; }
+        label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: #666; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
         
-        button { width: 100%; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-bottom: 10px; }
         .btn-main { background: var(--primary); color: white; }
         .btn-add { background: var(--green); color: white; }
-        button:hover { opacity: 0.8; }
+        .btn-reset { background: #e74c3c; color: white; font-size: 0.8rem; margin-top: auto; }
+        button:hover { opacity: 0.9; transform: scale(1.02); }
 
-        /* منطقة الرسم */
-        #tree-area { flex-grow: 1; position: relative; background: white; cursor: grab; }
-        .node circle { fill: #fff; stroke: var(--green); stroke-width: 3px; }
-        .node text { font-size: 14px; font-weight: bold; fill: #333; }
-        .link { fill: none; stroke: #ccc; stroke-width: 2px; }
+        #tree-area { flex-grow: 1; position: relative; background: #ffffff; cursor: grab; }
         
-        .instructions { font-size: 0.8rem; color: #888; text-align: center; margin-top: auto; }
+        /* تنسيق الشجرة */
+        .node circle { fill: #fff; stroke: var(--green); stroke-width: 3px; cursor: pointer; }
+        .node text { font-size: 14px; font-weight: bold; fill: #333; pointer-events: none; text-shadow: 0 1px 2px white; }
+        .link { fill: none; stroke: #bdc3c7; stroke-width: 2px; }
+        
+        .instructions { font-size: 0.8rem; color: #888; text-align: center; margin-top: 10px; line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -37,13 +38,13 @@
     
     <div class="section" id="root-section">
         <label>إضافة رأس العائلة (الجد الأكبر):</label>
-        <input type="text" id="rootName" placeholder="اسم الجد الأكبر">
+        <input type="text" id="rootName" placeholder="مثال: الجد علي">
         <button class="btn-main" onclick="addRoot()">بدء الشجرة</button>
     </div>
 
     <div class="section" id="member-section" style="display:none;">
         <label>اسم الشخص الجديد:</label>
-        <input type="text" id="newName" placeholder="الاسم الكامل">
+        <input type="text" id="newName" placeholder="مثال: محمد علي">
         
         <label>اختر الأب من القائمة:</label>
         <select id="parentSelect"></select>
@@ -51,12 +52,12 @@
         <button class="btn-add" onclick="addChild()">إضافة إلى الشجرة</button>
     </div>
 
-    <button style="background:#e74c3c; color:white; font-size:0.7rem;" onclick="resetTree()">مسح الكل والبدء من جديد</button>
-    
     <div class="instructions">
-        * استخدم الماوس للسحب والتقريب (Zoom) <br>
-        * يتم الحفظ تلقائياً في متصفحك
+        💡 <b>نصيحة:</b> ابدأ بإضافة الجد أولاً، ثم أبناءه، ثم أحفاده بالترتيب.<br>
+        (استخدم عجلة الماوس للتقريب والتبعيد)
     </div>
+
+    <button class="btn-reset" onclick="resetTree()">مسح الكل والبدء من جديد</button>
 </div>
 
 <div id="tree-area"></div>
@@ -71,19 +72,20 @@
     }
 
     function addRoot() {
-        const name = document.querySelector('#rootName').value;
-        if(!name) return;
-        familyData = [{ id: Date.now().toString(), name: name, parentId: null }];
+        const name = document.querySelector('#rootName').value.trim();
+        if(!name) return alert("يرجى إدخال اسم");
+        familyData = [{ id: "root", name: name, parentId: null }];
         document.querySelector('#rootName').value = '';
         save();
     }
 
     function addChild() {
-        const name = document.querySelector('#newName').value;
+        const name = document.querySelector('#newName').value.trim();
         const parentId = document.querySelector('#parentSelect').value;
-        if(!name || !parentId) return;
+        if(!name) return alert("يرجى إدخال الاسم");
         
-        familyData.push({ id: Date.now().toString(), name: name, parentId: parentId });
+        const id = "id_" + Date.now();
+        familyData.push({ id: id, name: name, parentId: parentId });
         document.querySelector('#newName').value = '';
         save();
     }
@@ -114,34 +116,52 @@
         d3.select("#tree-area").selectAll("*").remove();
         if (familyData.length === 0) return;
 
-        const width = document.querySelector('#tree-area').offsetWidth;
-        const height = document.querySelector('#tree-area').offsetHeight;
+        const container = document.querySelector('#tree-area');
+        const width = container.offsetWidth;
+        const height = container.offsetHeight;
 
         const svg = d3.select("#tree-area").append("svg")
-            .attr("width", "100%").attr("height", "100%")
+            .attr("width", "100%")
+            .attr("height", "100%")
             .call(d3.zoom().on("zoom", (event) => g.attr("transform", event.transform)))
             .append("g");
 
-        const g = svg.append("g").attr("transform", "translate(50,50)");
+        const g = svg.append("g").attr("transform", "translate(" + width/2 + ", 50)");
 
+        // تحويل البيانات لشكل هرمي
         const stratify = d3.stratify().id(d => d.id).parentId(d => d.parentId);
         const root = d3.hierarchy(stratify(familyData));
 
-        const treeLayout = d3.tree().nodeSize([60, 200]);
+        // إعدادات المسافات بين العقد (Vertical Tree)
+        const treeLayout = d3.tree().nodeSize([120, 100]); // [العرض بين الإخوة، الطول بين الأجيال]
         treeLayout(root);
 
-        g.selectAll(".link").data(root.links()).enter().append("path").attr("class", "link")
-            .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+        // رسم الروابط (الخطوط)
+        g.selectAll(".link")
+            .data(root.links())
+            .enter().append("path")
+            .attr("class", "link")
+            .attr("d", d3.linkVertical()
+                .x(d => d.x)
+                .y(d => d.y));
 
-        const node = g.selectAll(".node").data(root.descendants()).enter().append("g")
-            .attr("class", "node").attr("transform", d => `translate(${d.y},${d.x})`);
+        // رسم العقد (الدوائر والأسماء)
+        const node = g.selectAll(".node")
+            .data(root.descendants())
+            .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", d => `translate(${d.x},${d.y})`);
 
-        node.append("circle").attr("r", 10);
-        node.append("text").attr("dy", ".35em").attr("x", 15).style("text-anchor", "start").text(d => d.data.name);
+        node.append("circle").attr("r", 8);
+
+        node.append("text")
+            .attr("dy", "2em") // وضع النص تحت الدائرة
+            .style("text-anchor", "middle")
+            .text(d => d.data.name);
     }
 
     function resetTree() {
-        if(confirm("هل تريد مسح الشجرة بالكامل؟")) {
+        if(confirm("هل أنت متأكد؟ سيتم حذف جميع البيانات بشكل نهائي!")) {
             familyData = [];
             save();
         }
