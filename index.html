@@ -1,17 +1,13 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>شجرة آل التميمي</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&display=swap" rel="stylesheet">
 
 <style>
 body {
     margin: 0;
     background: #e8e3d3;
-    font-family: "Amiri", Tahoma;
+    font-family: 'Amiri', serif;
 }
 
-/* ===== الإطار ===== */
+/* إطار */
 .poster {
     width: 1200px;
     margin: 20px auto;
@@ -21,7 +17,7 @@ body {
     position: relative;
 }
 
-/* إطار داخلي ذهبي */
+/* زخرفة داخلية */
 .poster::before {
     content: "";
     position: absolute;
@@ -29,39 +25,21 @@ body {
     border: 5px solid #caa54c;
 }
 
-/* ===== العنوان ===== */
-.header {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
+/* عنوان اسلامي */
 .title {
-    font-size: 32px;
-    font-weight: bold;
+    text-align: center;
+    font-size: 36px;
     color: #1b5e20;
-    background: #fff3cd;
-    padding: 10px 40px;
-    border: 3px solid #caa54c;
-    display: inline-block;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
 }
 
 /* صندوق الجد */
-.root-box {
-    text-align: center;
-    margin: 20px 0;
-}
-
 .root-box span {
-    background: #f5deb3;
+    background: #fdf1d6;
     padding: 12px 30px;
-    border: 3px solid black;
-    font-size: 20px;
-    font-weight: bold;
-}
-
-/* ===== SVG ===== */
-svg {
-    width: 100%;
+    border: 3px solid #000;
+    font-size: 22px;
 }
 
 /* العقد */
@@ -73,79 +51,14 @@ svg {
 
 /* النص */
 .label {
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     text-anchor: middle;
-    dominant-baseline: middle;
 }
 
 /* الخطوط */
 .link {
-    stroke: black;
+    stroke: #000;
     stroke-width: 2;
 }
 </style>
-</head>
-
-<body>
-
-<div class="poster">
-
-    <div class="header">
-        <div class="title">🌳 شجرة عشيرة آل التميمي</div>
-    </div>
-
-    <div class="root-box">
-        <span>كاظم التميمي</span>
-    </div>
-
-    <svg height="500">
-
-        <!-- خط رئيسي -->
-        <line class="link" x1="600" y1="0" x2="600" y2="80"/>
-
-        <!-- خط أفقي -->
-        <line class="link" x1="300" y1="80" x2="900" y2="80"/>
-
-        <!-- الأبناء -->
-
-        <!-- مجيد -->
-        <line class="link" x1="300" y1="80" x2="300" y2="140"/>
-        <rect class="node" x="250" y="140" width="100" height="40"/>
-        <text class="label" x="300" y="160">مجيد</text>
-
-        <!-- أسامة -->
-        <line class="link" x1="600" y1="80" x2="600" y2="140"/>
-        <rect class="node" x="550" y="140" width="100" height="40"/>
-        <text class="label" x="600" y="160">أسامة</text>
-
-        <!-- نبيل -->
-        <line class="link" x1="900" y1="80" x2="900" y2="140"/>
-        <rect class="node" x="850" y="140" width="100" height="40"/>
-        <text class="label" x="900" y="160">نبيل</text>
-
-        <!-- أبناء أسامة -->
-        <line class="link" x1="600" y1="180" x2="600" y2="240"/>
-        <line class="link" x1="450" y1="240" x2="750" y2="240"/>
-
-        <!-- مصطفى -->
-        <line class="link" x1="450" y1="240" x2="450" y2="300"/>
-        <rect class="node" x="400" y="300" width="100" height="40"/>
-        <text class="label" x="450" y="320">مصطفى</text>
-
-        <!-- زين -->
-        <line class="link" x1="600" y1="240" x2="600" y2="300"/>
-        <rect class="node" x="550" y="300" width="100" height="40"/>
-        <text class="label" x="600" y="320">زين</text>
-
-        <!-- زيد -->
-        <line class="link" x1="750" y1="240" x2="750" y2="300"/>
-        <rect class="node" x="700" y="300" width="100" height="40"/>
-        <text class="label" x="750" y="320">زيد</text>
-
-    </svg>
-
-</div>
-
-</body>
-</html>
